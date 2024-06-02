@@ -26,24 +26,35 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
+        
+
         const playerImage = new Image();
         playerImage.src = 'image.png'; // Replace with the path to your player image
 
         const obstacleImage = new Image();
         obstacleImage.src = 'jj.png'; // Replace with the path to your obstacle image
 
-        const player = {
-            x: 0.1 * canvas.width,
-            y: 0.6 * canvas.height,
-            width: 0.04 * canvas.width,
-            height: 0.08 * canvas.height,
-            dy: 0,
-            gravity: 0.6,
-            jumpPower: -0.15 * canvas.height,
-            grounded: false,
-            jumping: false,
-            scoreEligible: false
-        };
+        // Set the desired jump height and the standard canvas height
+const desiredJumpHeight = 100; // Set to your desired jump height in pixels
+const standardCanvasHeight = 600; // Set to the height of the canvas where jump height is measured
+
+// Calculate the jump power relative to the current canvas height
+const jumpPowerRatio = desiredJumpHeight / standardCanvasHeight;
+const jumpPower = -canvas.height * jumpPowerRatio;
+
+// Define the player object with the adjusted jump power
+const player = {
+    x: 0.1 * canvas.width,
+    y: 0.6 * canvas.height,
+    width: 0.04 * canvas.width,
+    height: 0.08 * canvas.height,
+    dy: 0,
+    gravity: 0.6,
+    jumpPower: jumpPower,
+    grounded: false,
+    jumping: false,
+    scoreEligible: false
+};
 
         const obstacles = [];
         let obstacleTimer = 0;

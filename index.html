@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geometry Dash Clone</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+        }
+        canvas {
+            border: 1px solid #fff;
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const playerImage = new Image();
+        playerImage.src = 'image.png'; // Replace with the path to your player image
+
+        const obstacleImage = new Image();
+        obstacleImage.src = 'jj.png'; // Replace with the path to your obstacle image
+
+        const player = {
+            x: 0.1 * canvas.width,
+            y: 0.6 * canvas.height,
+            width: 0.04 * canvas.width,
+            height: 0.08 * canvas.height,
+            dy: 0,
+            gravity: 0.6,
+            jumpPower: -0.15 * canvas.height,
+            grounded: false,
+            jumping: false,
+            scoreEligible: false
+        };
+
+        const obstacles = [];
+        let obstacleTimer = 0;
+        const obstacleInterval = 0.2 * canvas.width; // Interval based on canvas width
+
+        let score = 0;
+        let coin = null;
+
+        const owSound = new Audio('ow.mp3'); // Load the sound file
+
+        // Function to set canvas size based on the viewport size
+        function setCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Update player and obstacle positions and dimensions based on new canvas size
+            player.x *= canvas.width / oldCanvasWidth;
+            player.y *= canvas.height / oldCanvasHeight;
+            player.width *= canvas.width / oldCanvasWidth;
+            player.height *= canvas.height / oldCanvasHeight;
+
+            for (const obstacle of obstacles) {
+                obstacle.x *= canvas.width / oldCanvasWidth;
+                obstacle.y *= canvas.height / oldCanvasHeight;
+                obstacle.width *= canvas.width / oldCanvasWidth;
+                obstacle.height *= canvas.height / oldCanvasHeight;
+            }
+
+            oldCanvasWidth = canvas.width;
+            oldCanvasHeight = canvas.height;
+        }
+
+        let oldCanvasWidth = canvas.width;
+        let oldCanvasHeight = canvas.height;
+
+        // Call setCanvasSize function initially and on window resize
+        setCanvasSize();
+        window.addEventListener('resize', setCanvasSize);
+
+        function createObstacle() {
+            const obstacle = {
+                x: canvas.width,
+                y: 0.6 * canvas.height,
+                width: 0.04 * canvas.width,
+                height: 0.08 * canvas.height,
+                image: obstacleImage,
+                passed: false
+            };
+            obstacles.push(obstacle);
+
+            // Create a coin after the obstacle is created
+            if (!coin) {
+                createCoin(obstacle.x + 0.2 * canvas.width); // Coin placed 200px after the obstacle
+            }
+        }
+
+        function updateObstacles() {
+            obstacleTimer++;
+            if (obstacleTimer % obstacleInterval === 0) {
+                createObstacle();
+            }
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+    obstacles[i].x -= 0.00625 * canvas.width; // Adjusted speed
+    if (obstacles[i].x + obstacles[i].width < 0) {
+        obstacles.splice(i, 1);
+    }
+}
+        }
+
+        function drawObstacles() {
+            for (const obstacle of obstacles) {
+                ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            }
+        }
+
+        function createCoin(xPosition) {
+            coin = {
+                x: xPosition,
+                y: 0.5 * canvas.height, // Coin is slightly above the ground
+                width: 0.03 * canvas.width,
+                height: 0.03 * canvas.width,
+                color: '#ffd700'
+            };
+        }
+
+        function updateCoin() {
+            if (coin) {
+    coin.x -= 0.00625 * canvas.width; // Adjusted speed
+    if (coin.x + coin.width < 0) {
+        coin = null; // Remove coin if it goes off-screen
+    }
+}
+
+        }
+
+        function drawCoin() {
+            if (coin) {
+                ctx.fillStyle = coin.color;
+                ctx.beginPath();
+                ctx.arc(coin.x + coin.width / 2, coin.y + coin.height / 2, coin.width / 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function handleInput() {
+            window.addEventListener('keydown', (e) => {
+                if (player.grounded && e.code === 'Space') {
+                    player.dy = player.jumpPower;
+                    player.grounded = false;
+                    player.jumping = true;
+                    player.scoreEligible = true;
+                }
+            });
+        }
+
+        function updatePlayer() {
+            player.dy += player.gravity;
+            player.y += player.dy;
+
+            if (player.y + player.height >= canvas.height) {
+                player.y = canvas.height - player.height;
+                player.dy = 0;
+                player.grounded = true;
+                player.jumping = false;
+            }
+        }
+
+        function drawPlayer() {
+            ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+        }
+
+        function drawScore() {
+            ctx.fillStyle = '#fff';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Score: ${score}`, 10, 30);
+        }
+
+        function checkCollisions() {
+            for (const obstacle of obstacles) {
+                if (player.x < obstacle.x + obstacle.width &&
+                    player.x + player.width > obstacle.x &&
+                    player.y < obstacle.y + obstacle.height &&
+                    player.y + player.height > obstacle.y) {
+                    owSound.play(); // Play sound on collision
+                    alert('Game Over');
+                    document.location.reload();
+                }
+
+                if (player.jumping && player.scoreEligible && player.x > obstacle.x + obstacle.width) {
+                    player.scoreEligible = false;
+                    score++;
+                }
+            }
+
+            if (coin &&
+                player.x < coin.x + coin.width &&
+                player.x + player.width > coin.x &&
+                player.y < coin.y + coin.height &&
+                player.y + player.height > coin.y) {
+                score += 19;
+                coin = null; // Remove the coin after collecting
+            }
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            updatePlayer();
+            updateObstacles();
+            updateCoin();
+            checkCollisions();
+
+            drawPlayer();
+            drawObstacles();
+            drawCoin();
+            drawScore();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        handleInput();
+        gameLoop();
+    </script>
+</body>

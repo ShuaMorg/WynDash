@@ -159,16 +159,33 @@ const player = {
             }
         }
 
-        function handleInput() {
-            window.addEventListener('keydown', (e) => {
-                if (player.grounded && e.code === 'Space') {
-                    player.dy = player.jumpPower;
-                    player.grounded = false;
-                    player.jumping = true;
-                    player.scoreEligible = true;
-                }
-            });
+
+
+        // Function to handle input (keyboard and touch)
+function handleInput() {
+    // Keyboard input
+    window.addEventListener('keydown', (e) => {
+        if (player.grounded && e.code === 'Space') {
+            jump();
         }
+    });
+
+    // Touch input for mobile devices
+    canvas.addEventListener('touchstart', (e) => {
+        if (player.grounded) {
+            jump();
+        }
+    });
+}
+
+// Function to handle jumping
+function jump() {
+    player.dy = player.jumpPower;
+    player.grounded = false;
+    player.jumping = true;
+    player.scoreEligible = true;
+}
+
 
         function updatePlayer() {
             player.dy += player.gravity;
@@ -239,3 +256,4 @@ const player = {
         gameLoop();
     </script>
 </body>
+
